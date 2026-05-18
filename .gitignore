@@ -1,0 +1,17 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Allure output
+allure-results/
+allure-report/
+
+# Virtual environment
+venv/
+.venv/
+
+# VSCode / JetBrains / Editor configs
+.vscode/
+.idea/
