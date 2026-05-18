@@ -1,18 +1,19 @@
 # HTTP client
-requests==2.32.3
+requests==2.34.2
 
 # Test framework
-pytest==8.3.5
-pytest-html==4.1.1
+pytest==9.0.3
+pytest-html==4.2.0
 
 # Allure reporting
-allure-pytest==2.13.5
+allure-pytest==2.16.0
+allure-python-commons
 
 # Environment variable management
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 
 # Type hinting & data validation (optional but production-grade)
-pydantic==2.8.2
+pydantic==2.13.4
 
 # Logging utilities
-colorlog==6.8.2
+colorlog==6.10.1
