@@ -48,9 +48,9 @@ def _load_config() -> Config:
         env=os.getenv("ENV", "production"),
         test_email=os.getenv("TEST_EMAIL", ""),
         test_password=os.getenv("TEST_PASSWORD", ""),
-        allure_reports_dir=os.getenv("ALLERGE_REPORTS_DIR", "allure-results"),
+        allure_reports_dir=os.getenv("ALLURE_RESULTS_DIR", "allure-results"),
         request_timeout=int(os.getenv("REQUEST_TIMEOUT", "30")),
-        verify_ssl=os.getenv("VERIFY_SSL", "ture").lower() == "true",
+        verify_ssl=os.getenv("VERIFY_SSL", "true").lower() == "true",
     )
 
 # Singleton instance - import directly anywhere in the framework

@@ -15,10 +15,14 @@ from typing import Any
 
 import allure
 import requests
+import urllib3
 from requests import Response, Session
 
 from config import settings
 from utils.logger import get_logger
+
+# Suppress only the InsecureRequestWarning from urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = get_logger(__name__)
 
