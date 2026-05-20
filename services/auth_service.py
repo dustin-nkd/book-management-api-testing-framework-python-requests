@@ -27,7 +27,7 @@ class AuthService(BaseClient):
     Usage:
         auth = AuthService()
         response = auth.login("user@example.com", "secret")
-        token = response.json()["access_token"]
+        token = response.json()["accessToken"]
         auth.set_token(token)
     """
 
@@ -44,7 +44,7 @@ class AuthService(BaseClient):
             password: User's plain-text password.
 
         Returns:
-            Response with 'access_token' and 'exp' on success (HTTP 200).
+            Response with 'accessToken' and 'exp' on success (HTTP 200).
         """
         payload: dict[str, str] = {"email": email, "password": password}
         return self.post("/api/login", payload=payload)
@@ -81,7 +81,7 @@ class AuthService(BaseClient):
 
         # Only include optional fields if they are provided to keep payload clean
         if avatar_url:
-            payload["avatar_url"] = avatar_url
+            payload["avatarUrl"] = avatar_url
         if phone:
             payload["phone"] = phone
         if address:

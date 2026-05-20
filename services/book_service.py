@@ -75,7 +75,7 @@ class BookService(BaseClient):
             Response with full book details including pictures, promotions (HTTP 200).
         """
         params: dict[str, Any] = {"view": str(increment_view).lower()}
-        return self.get(self._ENDPOINT / {book_id}, params=params)
+        return self.get(f"{self._ENDPOINT}/{book_id}", params=params)
 
     @allure.step("Create new book: name='{name}'")
     def create_book(
