@@ -13,6 +13,7 @@ import pytest
 
 from config import settings
 from data.book_data import VALID_BOOK_PAYLOAD
+from data.category_data import unique_category_name
 from services.auth_service import AuthService
 from services.book_service import BookService
 from services.category_service import CategoryService
@@ -206,3 +207,106 @@ def _extract_id_from_message(message: str) -> str:
     # Split on ": " and take the last segment as the ID
     parts = message.split(": ")
     return parts[-1].strip() if len(parts) >= 2 else ""
+
+
+@pytest.fixture(scope="function")
+def created_category_name(category_service: CategoryService) -> str:
+    """
+    Create a uniquely named category before a test and delete it after.
+
+    Setup:    POST /api/category-book with a unique name.
+    Yield:    The created category name string.
+    Teardown: DELETE /api/category-book/{name} regardless of test outcome.
+
+    Args:
+        category_service: Authenticated CategoryService from session fixture.
+
+    Returns:
+        name (str): The unique name of the newly created category.
+    """
+    name = unique_category_name("AutoTest_Cat")
+
+    # --- SETUP ---
+    with allure.step(f"Fixture setup: create category '{name}'"):
+        response = category_service.create_category(name)
+
+        assert response.status_code == 201, (
+            f"Fixture failed to create category '{name}'.\n"
+            f"Status: {response.status_code}\n"
+            f"Body:   {response.text}"
+        )
+        logger.info("Fixture setup: category '%s' created.", name)
+
+    yield name
+
+    # --- TEARDOWN ---
+    with allure.step(f"Fixture teardown: delete category '{name}'"):
+        delete_resp = category_service.delete_category(name)
+        logger.info(
+            "Fixture teardown: delete category '%s' > HTTP %s",
+            name,
+            delete_resp.status_code,
+        )
+
+
+@pytest.fixture(scope="function")
+def created_category_with_book(
+        category_service: CategoryService,
+        book_service: BookService,
+) -> str:
+    """
+    Create a category and attach a book to it before the test.
+    Used for TC-CAT-13: verify delete behavior when bookCount > 0.
+
+    Setup:    Create a unique category, then create a book linked to it.
+    Yield:    The created name string.
+    Teardown: Attempt to delete the book, then the category.
+
+    Yields:
+        name (str): The category name that has at least on book.
+    """
+    cat_name = unique_category_name("AutoTest_CatWithBook")
+    book_id: str = ""
+
+    # -- SETUP: create category ---
+    with allure.step(f"Fixture setup: create category '{cat_name}'"):
+        cat_resp = category_service.create_category(cat_name)
+        assert cat_resp.status_code == 201, (
+            f"Fixture failed to create category '{cat_name}'.\n"
+            f"Body:   {cat_resp.text}"
+        )
+
+    # --- SETUP: create a book linked to this category ---
+    with allure.step(f"Fixture setup: create book linked to '{cat_name}'"):
+        book_resp = book_service.create_book(
+            name=f"AutoTest_Book_for_{cat_name}",
+            status="AVAILABLE",
+            categories=[cat_name],
+            price=50000,
+        )
+        assert book_resp.status_code == 200, (
+            f"Fixture failed to create book.\n"
+            f"Body:   {book_resp.text}"
+        )
+        msg: str = book_resp.json().get("msg", "")
+        book_id = _extract_id_from_message(msg)
+        logger.info(
+            "Fixture setup: book '%s' created for category '%s'.",
+            book_id,
+            cat_name,
+        )
+
+    yield cat_name
+
+    # --- TEATDOWN: clean up book first, then category ---
+    with allure.step("Fixture teardown: delete book and category"):
+        if book_id:
+            book_service.delete_book(book_id)
+            logger.info("Fixture teardown: book '%s' deleted.", book_id)
+
+        delete_resp = category_service.delete_category(cat_name)
+        logger.info(
+            "Fixture teardown: delete category '%s' > HTTP %s",
+            cat_name,
+            delete_resp.status_code,
+        )

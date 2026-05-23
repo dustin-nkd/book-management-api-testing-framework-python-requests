@@ -17,3 +17,5 @@ pydantic==2.13.4
 
 # Logging utilities
 colorlog==6.10.1
+
+urllib3
