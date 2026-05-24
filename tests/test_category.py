@@ -29,7 +29,7 @@ class TestGetCategories:
 
     @allure.feature("Get Categories")
     @allure.story("Get all categories")
-    @allure.title("TC CAT-01: GET /api/category-book shoould return list with bookCount")
+    @allure.title("TC CAT-01: GET /api/category-book should return list with bookCount")
     @pytest.mark.smoke
     @pytest.mark.category
     def test_get_all_categories_success(
@@ -55,7 +55,7 @@ class TestGetCategories:
         assert "pagination" in body, "Response missing 'pagination' key."
 
         # Verify pagination contains 'total' (Category API only return total,
-        # unlike Book API which alse return totalPage, currentPage, lengthData)
+        # unlike Book API which also return totalPage, currentPage, lengthData)
         assert "total" in body["pagination"], "Response missing 'total' key."
         assert body["pagination"]["total"] >= 0
 
@@ -131,7 +131,7 @@ class TestCreateCategory:
     ) -> None:
         """
         Verify that omitting the required 'name' field triggers a 422
-        response wit ha descriptive 'fields' validation object.
+        response with a descriptive 'fields' validation object.
         """
         response = category_service.post("/api/category-book", payload=payload)
 
@@ -140,7 +140,7 @@ class TestCreateCategory:
         body = response.json()
         assert "fields" in body, "Expected 'fields' key in 422 response body."
         assert expected_field in body["fields"], (
-            f"Expectd '{expected_field}' in fields but got {body['fields']}"
+            f"Expected '{expected_field}' in fields but got {body['fields']}"
         )
 
     @allure.feature("Create Category")
@@ -149,7 +149,7 @@ class TestCreateCategory:
     @pytest.mark.category
     @pytest.mark.xfail(
         reason=(
-                "BUG-01 / BUG-03: Server does not validate blank or whitepsace-only "
+                "BUG-01 / BUG-03: Server does not validate blank or whitespace-only "
                 "category names. Input is accepted as valid if not already in DB. "
                 "Expected: 422. Actual: 201 (created) or 400 (duplicate if exists."
         ),
@@ -210,7 +210,7 @@ class TestUpdateCategory:
         assert response.status_code == 200
         assert response.json().get("msg") == "Category updated successfully."
 
-        # Cleanup: delete the renamed catgegory since fixture will try old name
+        # Cleanup: delete the renamed category since fixture will try old name
         # (old name no longer exists after rename)
         category_service.delete_category(new_name)
 
@@ -236,7 +236,7 @@ class TestUpdateCategory:
         assert response.json().get("msg") == "Invalid data."
 
     @allure.feature("Update Category")
-    @allure.story("Validation error - misisng newName field")
+    @allure.story("Validation error - missing newName field")
     @allure.title("TC-CAT-08: Update category  without newName should return 422")
     @pytest.mark.category
     def test_update_category_missing_new_name(
@@ -248,7 +248,7 @@ class TestUpdateCategory:
         Verify that omitting 'newName' from the PUT request body
         returns 422 with a descriptive field-level validation error.
         """
-        # Send only 'name', intentionally omiting 'newName'
+        # Send only 'name', intentionally omitting 'newName'
         response = category_service.put(
             "/api/category-book",
             payload={"name": created_category_name},
@@ -279,7 +279,7 @@ class TestDeleteCategory:
         """
         Verify that an existing can be deleted successfully.
         The fixture creates the category: this test deletes it directly.
-        Fixture teardown will attempt delection again but 404 is acceptabl.
+        Fixture teardown will attempt deletion again but 404 is acceptable.
         """
         response = category_service.delete_category(name=created_category_name)
 

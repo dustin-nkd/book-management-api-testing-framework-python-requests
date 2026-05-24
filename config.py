@@ -2,7 +2,7 @@
 config.py
 --------
 Centralized configuration loader.
-Reads all environment variables from the .env file and exposes them as tpyed attributes for use throughout the framework.
+Reads all environment variables from the .env file and exposes them as typed attributes for use throughout the framework.
 Pattern: Single source of truth for all configuration.
 """
 import os
@@ -15,7 +15,7 @@ load_dotenv()
 @dataclass(frozen=True) # frozen=True: immutable, prevents accidental overwrites
 class Config:
     """
-    Holds all framework configurations values.
+    Holds all framework configuration values.
     frozen=True ensures values cannot be modified at runtime.
     """
     # --- Server ---

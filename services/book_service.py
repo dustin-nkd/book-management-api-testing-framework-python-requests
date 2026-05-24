@@ -26,7 +26,7 @@ class BookService(BaseClient):
     Usage:
         book_svc = BookService()
         book_svc.set_token(access_token)
-        responese = bok_svc.get_books(limit=5, page=1)
+        response = book_svc.get_books(limit=5, page=1)
     """
     _ENDPOINT = "/api/book"
 
@@ -40,7 +40,7 @@ class BookService(BaseClient):
             sort_by: str = "desc",
     ) -> Response:
         """
-        Retreieve a paginated list of books with optional filtering and sorting.
+        Retrieve a paginated list of books with optional filtering and sorting.
 
         Args:
             limit:   Number of records per page (1-10000). Defaults: 10.
@@ -104,7 +104,7 @@ class BookService(BaseClient):
             promotion:   Optional list of promotion ID strings to attach.
 
         Returns:
-            Respoonse with a confirmation message on success (HTTP 200).
+            Response with a confirmation message on success (HTTP 200).
         """
         payload: dict[str, Any] = {
             "name": name,
@@ -113,7 +113,7 @@ class BookService(BaseClient):
             "price": price,
         }
 
-        # Only include optional fields when explicity provided
+        # Only include optional fields when explicitly provided
         if slug:
             payload["slug"] = slug
         if description:
@@ -139,7 +139,7 @@ class BookService(BaseClient):
                             categories, price, promotion.
 
         Returns:
-            Response wit a confirmation message on success (HTTP 200).
+            Response with a confirmation message on success (HTTP 200).
         """
         return self.patch(f"{self._ENDPOINT}/{book_id}", payload=payload)
 
