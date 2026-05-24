@@ -56,7 +56,7 @@ def auth_token() -> str:
     )
 
     token = response.json().get("accessToken", "")
-    assert token, "Login succeded (HTTP 200) but 'accessToken' is missing in response."
+    assert token, "Login succeeded (HTTP 200) but 'accessToken' is missing in response."
 
     logger.info("Session setup: token acquired successfully.")
     return token
@@ -124,7 +124,7 @@ def public_book_service() -> BookService:
     Used for tests targeting public endpoints (e.g. GET /api/book).
 
     Returns:
-        Bookservice instance with no Authorization header.
+        BookService instance with no Authorization header.
     """
     return BookService()
 
@@ -136,7 +136,7 @@ def public_book_service() -> BookService:
 @pytest.fixture(scope="function")
 def create_book_id(book_service: BookService) -> str:
     """
-    Createa a book before a test and automatically delete it after.
+    Create a book before a test and automatically delete it after.
 
     This is a setup/teardown fixture using pytest's yield pattern:
         - SETUP: Create a book using VALID_BOOK_PAYLOAD.
@@ -147,7 +147,7 @@ def create_book_id(book_service: BookService) -> str:
     isolated book record, preventing test interference.
 
     Args:
-        book_service: Auhthenticated BookService from the session fixture.
+        book_service: Authenticated BookService from the session fixture.
 
     Yields:
         book_id (str): UUID of the newly created book.
@@ -199,7 +199,7 @@ def _extract_id_from_message(message: str) -> str:
     This helper extracts the UUID portion after the last colon+space.
 
     Args:
-        message: The 'msg' styring from the API response fails.
+        message: The 'msg' string from the API response fails.
 
     Returns:
         Extracted ID string, or empty string if parsing fails.
@@ -298,7 +298,7 @@ def created_category_with_book(
 
     yield cat_name
 
-    # --- TEATDOWN: clean up book first, then category ---
+    # --- TEARDOWN: clean up book first, then category ---
     with allure.step("Fixture teardown: delete book and category"):
         if book_id:
             book_service.delete_book(book_id)

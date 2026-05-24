@@ -48,7 +48,7 @@ class TestAuthFixtures:
 
         # Required fields per OpenAPI spec
         for field in ["id", "name", "email"]:
-            assert field in body, f"Field '{field}' misisng from /api/me response."
+            assert field in body, f"Field '{field}' missing from /api/me response."
 
         assert body["email"] == settings.test_email, (
             f"Expected email '{settings.test_email}' but got '{body['email']}'"

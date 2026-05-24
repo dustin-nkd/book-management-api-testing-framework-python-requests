@@ -1,6 +1,6 @@
 """
-service/category_service.py
----------------------------
+services/category_service.py
+----------------------------
 Service class for Category Management endpoints.
 
 Endpoints covered:

@@ -32,7 +32,7 @@ class BaseClient:
     A wrapper around the 'requests.Session' providing:
     - Automatic base URL resolution.
     - Allure step logging for every HTTP call.
-    - Centralizedd error handling and response loggin.
+    - Centralized error handling and response logging.
     - Optional Bearer token injection via 'set_token()'.
     """
 
@@ -175,7 +175,7 @@ class BaseClient:
     ) -> Response:
         """
         Core dispatcher: builds the full URL, executes the request,
-        logs details to both the terminal and Allure repport.
+        logs details to both the terminal and Allure report.
 
         This method is intentionally private - all public HTTP methods
         route through here to guarantee consistent logging behavior.
@@ -231,7 +231,7 @@ class BaseClient:
         Args:
             method:   HTTP verb string.
             url:      Full resolved URL.
-            kwargs:   Request keyword arguments (headersm body, params, etc.)
+            kwargs:   Request keyword arguments (headers, body, params, etc.)
         """
         # Mask the Authorization header value to protect credentials in reports
         headers = dict(self._session.headers)

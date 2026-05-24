@@ -3,7 +3,7 @@ services/auth_service.py
 ------------------------
 Service class for Authentication Management endpoints.
 
-Endpoints coverd:
+Endpoints covered:
     POST   /api/login
     POST   /api/register
     POST   /api/refetch-token
@@ -67,8 +67,8 @@ class AuthService(BaseClient):
             email: Unique email address.
             password: Plain-text password (min length depends on server policy).
             avatar_url: Optional URL pointing to the user's avatar image.
-            phone: Option phone number.
-            address: Option address string.
+            phone: Optional phone number.
+            address: Optional address string.
 
         Returns:
             Response with a confirmation message on success (HTTP 200).
@@ -103,7 +103,7 @@ class AuthService(BaseClient):
     @allure.step("Update profile")
     def update_profile(self, payload: dict[str, Any]) -> Response:
         """
-        Update the current user's profile fields/
+        Update the current user's profile fields.
         Requires a valid Bearer token.
 
         Args:
