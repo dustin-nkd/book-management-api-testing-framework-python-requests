@@ -151,7 +151,7 @@ class BaseClient:
             **kwargs: Any,
     ) -> Response:
         """
-        Send an HTTP PATCH request with a JSON body.
+        Send an HTTP DELETE request.
 
         Args:
             endpoint: API path relative to base URL.
@@ -235,6 +235,8 @@ class BaseClient:
         """
         # Mask the Authorization header value to protect credentials in reports
         headers = dict(self._session.headers)
+        if "headers" in kwargs and kwargs["headers"]:
+            headers.update(kwargs["headers"])
         if "Authorization" in headers:
             headers["Authorization"] = "Bearer *** (masked)"
 
@@ -277,7 +279,7 @@ class BaseClient:
             body_str = json.dumps(body, indent=2, ensure_ascii=False)
             attachment_type = allure.attachment_type.JSON
         except ValueError:
-            # Response body is no JSON (e.g. plain text, HTML error page)
+            # Response body is not JSON (e.g. plain text, HTML error page)
             body_str = response.text
             attachment_type = allure.attachment_type.TEXT
 

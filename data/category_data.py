@@ -16,12 +16,12 @@ def unique_category_name(prefix: str = "AutoTest") -> str:
     """
     Generate a unique category name using a timestamp suffix.
     Prevents naming conflicts when running tests against a shared environment.
-    
+
     Args:
-        prefix: Human-readable prefix to identitfy the category in the DB.
-    
+        prefix: Human-readable prefix to identify the category in the DB.
+
     Returns:
-        A unique string in the formot: "{prefix}_{timestamp}"
+        A unique string in the format: "{prefix}_{timestamp}"
     """
     return f"{prefix}_{int(time.time())}"
 
@@ -48,7 +48,7 @@ CREATE_CATEGORY_MISSING_FIELD_CASES = [
 
 CREATE_CATEGORY_BLANK_NAME_CASES = [
     (
-        "empty_string_name",  # TC-CAT-06
+        "empty_string_name",  # TC-CAT-05
         {"name": ""},
     ),
     (

@@ -12,7 +12,8 @@ from dotenv import load_dotenv
 # Load .env file into os.environ before reading values
 load_dotenv()
 
-@dataclass(frozen=True) # frozen=True: immutable, prevents accidental overwrites
+
+@dataclass(frozen=True)  # frozen=True: immutable, prevents accidental overwrites
 class Config:
     """
     Holds all framework configuration values.
@@ -27,12 +28,13 @@ class Config:
     # --- Reporting ---
     allure_reports_dir: str
     # --- HTTP Settings ---
-    request_timeout: int # Default timeout (seconds) for all HTTP requests
-    verify_ssl: bool     # Enable/disable SSL verification
+    request_timeout: int  # Default timeout (seconds) for all HTTP requests
+    verify_ssl: bool      # Enable/disable SSL verification
+
 
 def _load_config() -> Config:
     """
-    Factory function: reads environment variables and return a Config object.
+    Factory function: reads environment variables and returns a Config object.
     Raises ValueError if any required variable is missing.
     """
     # List of variables that must be present in .env
@@ -55,4 +57,4 @@ def _load_config() -> Config:
 
 # Singleton instance - import directly anywhere in the framework
 # Example: from config import settings
-settings = _load_config()
+settings = _load_config()

@@ -116,6 +116,20 @@ class AuthService(BaseClient):
         """
         return self.patch("/api/profile", payload=payload)
 
+    @allure.step("Refetch access token using refetchToken cookie")
+    def refetch_token(self) -> Response:
+        """
+        Exchange the refetchToken cookie for a new access token.
+
+        The refetchToken cookie is set automatically by the server in the
+        login response. requests.Session forwards it on subsequent requests
+        to the same domain without any manual handling.
+
+        Returns:
+            Response with new 'accessToken' and 'exp' on success (HTTP 200).
+        """
+        return self.post("/api/refetch-token")
+
     @allure.step("Logout current session")
     def logout(self) -> Response:
         """

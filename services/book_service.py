@@ -1,10 +1,10 @@
 """
-service/book_service.py
+services/book_service.py
 -----------------------
 Service class for Book Management endpoints.
 
 Endpoints covered:
-    GET    /api/books     - List books (pagination, filter, sort)
+    GET    /api/book      - List books (pagination, filter, sort)
     POST   /api/book      - Create a book
     GET    /api/book/{id} - Get a single book by ID
     PATCH  /api/book/{id} - Update a book
@@ -47,7 +47,7 @@ class BookService(BaseClient):
             page:    Page number starting from 1. Defaults: 1.
             search:  Keyword to filter books by name or description.
             sort:    Field to sort by. Options: name, description, status,
-                     createAt, updateAt, slug, price, currentPrice, viewCount.
+                     createdAt, updatedAt, slug, price, currentPrice, viewCount.
             sort_by: Sort direction - 'asc' or 'desc'. Defaults: 'desc'.
 
         Returns:

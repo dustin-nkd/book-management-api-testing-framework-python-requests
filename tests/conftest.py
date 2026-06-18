@@ -1,5 +1,5 @@
 """
-test/conftest.py
+tests/conftest.py
 ----------------
 Pytest fixtures shared across all test modules.
 
@@ -50,8 +50,8 @@ def auth_token() -> str:
     )
 
     assert response.status_code == 200, (
-        f"Login failed during session setup.\n",
-        f"Status: {response.status_code}\n",
+        f"Login failed during session setup.\n"
+        f"Status: {response.status_code}\n"
         f"Body:   {response.text}"
     )
 
@@ -129,6 +129,43 @@ def public_book_service() -> BookService:
     return BookService()
 
 
+@pytest.fixture(scope="function")
+def fresh_login_service() -> AuthService:
+    """
+    Create a fresh AuthService with its own isolated login session.
+
+    Used for tests that consume or invalidate the token (logout) or require
+    the refetchToken cookie (refetch-token), where reusing the shared session
+    token would break authentication for other tests in the suite.
+
+    Scope: function - each test gets its own independent session with a
+    separate token and separate cookie jar from the main auth_token fixture.
+
+    Returns:
+        AuthService with a fresh token and session cookies set.
+    """
+    logger.info("fresh_login_service: performing isolated login for %s", settings.test_email)
+
+    auth = AuthService()
+    response = auth.login(
+        email=settings.test_email,
+        password=settings.test_password,
+    )
+
+    assert response.status_code == 200, (
+        f"fresh_login_service: login failed.\n"
+        f"Status: {response.status_code}\n"
+        f"Body:   {response.text}"
+    )
+
+    token = response.json().get("accessToken", "")
+    assert token, "fresh_login_service: login succeeded but 'accessToken' missing."
+
+    auth.set_token(token)
+    logger.info("fresh_login_service: isolated token acquired.")
+    return auth
+
+
 # ---------------------------------------------------------------------------
 # Resource management fixtures — create & auto-cleanup test data
 # ---------------------------------------------------------------------------
@@ -141,7 +178,7 @@ def create_book_id(book_service: BookService) -> str:
     This is a setup/teardown fixture using pytest's yield pattern:
         - SETUP: Create a book using VALID_BOOK_PAYLOAD.
         - YIELD: Pass the created book's ID to the test.
-        - TEARDOWN: Delete the regardless of test pass/fail.
+        - TEARDOWN: Delete the book regardless of test pass/fail.
 
     Scope: function - each test that needs a fresh book gets its own
     isolated book record, preventing test interference.
@@ -156,9 +193,17 @@ def create_book_id(book_service: BookService) -> str:
     with allure.step("Fixture setup: create a book for the test"):
         response = book_service.create_book(**VALID_BOOK_PAYLOAD)
 
+        # BUG-07: Server returns 200 instead of 201 and does not return the book ID.
+        # This is marked as xfail as requested.
+        if response.status_code == 200:
+            pytest.xfail(
+                "BUG-07: Server returns 200 instead of 201 on book creation, "
+                "and does not return the created book ID in the message."
+            )
+
         assert response.status_code == 201, (
-            f"Fixture failed to create book.\n",
-            f"Status: {response.status_code}\n",
+            f"Fixture failed to create book.\n"
+            f"Status: {response.status_code}\n"
             f"Body:   {response.text}"
         )
 
@@ -199,7 +244,7 @@ def _extract_id_from_message(message: str) -> str:
     This helper extracts the UUID portion after the last colon+space.
 
     Args:
-        message: The 'msg' string from the API response fails.
+        message: The 'msg' string from the API response.
 
     Returns:
         Extracted ID string, or empty string if parsing fails.
@@ -263,7 +308,7 @@ def created_category_with_book(
     Teardown: Attempt to delete the book, then the category.
 
     Yields:
-        name (str): The category name that has at least on book.
+        name (str): The category name that has at least one book.
     """
     cat_name = unique_category_name("AutoTest_CatWithBook")
     book_id: str = ""
@@ -284,7 +329,18 @@ def created_category_with_book(
             categories=[cat_name],
             price=50000,
         )
-        assert book_resp.status_code == 200, (
+
+        # BUG-07: Server returns 200 instead of 201 and does not return the book ID.
+        # This is marked as xfail as requested. We clean up the category first.
+        if book_resp.status_code == 200:
+            with allure.step("Fixture teardown (aborted): delete category"):
+                category_service.delete_category(cat_name)
+            pytest.xfail(
+                "BUG-07: Server returns 200 instead of 201 on book creation, "
+                "and does not return the created book ID in the message."
+            )
+
+        assert book_resp.status_code == 201, (
             f"Fixture failed to create book.\n"
             f"Body:   {book_resp.text}"
         )
