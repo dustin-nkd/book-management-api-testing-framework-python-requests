@@ -1,7 +1,7 @@
 """
 data/book_data.py
 -----------------
-Centralized test data for Book Mangement tests.
+Centralized test data for Book Management tests.
 Keeping test data separate from test logic improves maintainability
 and makes it easy to update payloads without touching test files.
 """
@@ -19,9 +19,9 @@ VALID_BOOK_PAYLOAD = {
     "slug": "python-testing-with-pytest",
 }
 
-VALID_BOOK_MINIMAL_PAYLOAD_ = {
+VALID_BOOK_MINIMAL_PAYLOAD = {
     # Only required fields - no optional fields included
-    "name": "Mnimal Book",
+    "name": "Minimal Book",
     "status": "AVAILABLE",
     "categories": ["Technology"],
     "price": 50000,
@@ -42,16 +42,17 @@ CREATE_BOOK_VALID_CASES = [
             "price": 200000,
             "description": "A handbook of agile software craftsmanship.",
         },
-        200  # Expected HTTP status code
+        201  # Expected HTTP status code
     ),
     (
-        "minial_required_fiels_only",
+        "minimal_required_fields_only",
         {
-            "name": "Minial Required Book",
+            "name": "Minimal Required Book",
             "status": "AVAILABLE",
             "categories": ["Technology"],
             "price": 50000,
-        }
+        },
+        201,
     ),
     (
         "unavailable_status",
@@ -72,7 +73,7 @@ CREATE_BOOK_VALID_CASES = [
 
 CREATE_BOOK_INVALID_CASES = [
     (
-        "misisng_name",
+        "missing_name",
         {
             # 'name' field intentionally omitted
             "status": "AVAILABLE",

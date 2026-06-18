@@ -29,12 +29,11 @@ class TestGetCategories:
 
     @allure.feature("Get Categories")
     @allure.story("Get all categories")
-    @allure.title("TC CAT-01: GET /api/category-book should return list with bookCount")
+    @allure.title("TC-CAT-01: GET /api/category-book should return list with bookCount")
     @pytest.mark.smoke
     @pytest.mark.category
     def test_get_all_categories_success(
             self,
-            public_book_service: CategoryService,
     ) -> None:
         """
         Verify public endpoint returns a list of categories.
@@ -54,8 +53,8 @@ class TestGetCategories:
         assert "list" in body, "Response missing 'list' key."
         assert "pagination" in body, "Response missing 'pagination' key."
 
-        # Verify pagination contains 'total' (Category API only return total,
-        # unlike Book API which also return totalPage, currentPage, lengthData)
+        # Verify pagination contains 'total' (Category API only returns total,
+        # unlike Book API which also returns totalPage, currentPage, lengthData)
         assert "total" in body["pagination"], "Response missing 'total' key."
         assert body["pagination"]["total"] >= 0
 
@@ -89,7 +88,7 @@ class TestCreateCategory:
         assert response.status_code == 201
         assert response.json().get("msg") == "Category created successfully."
 
-        # Teardown: remove the created to keep the environment clean
+        # Teardown: remove the created category to keep the environment clean
         category_service.delete_category(name)
 
     @allure.feature("Create Category")
@@ -151,7 +150,7 @@ class TestCreateCategory:
         reason=(
                 "BUG-01 / BUG-03: Server does not validate blank or whitespace-only "
                 "category names. Input is accepted as valid if not already in DB. "
-                "Expected: 422. Actual: 201 (created) or 400 (duplicate if exists."
+                "Expected: 422. Actual: 201 (created) or 400 (duplicate if it exists)."
         ),
         strict=False,
     )
@@ -170,7 +169,7 @@ class TestCreateCategory:
         Verify that blank or white-space names are rejected with 422.
 
         Currently marked xfail due to BUG-01 / BUG-03:
-        Server lacks input sanitization - blank string pass through
+        Server lacks input sanitization - blank strings pass through
         to DB lookup instead of being rejected at validation layer.
         """
         response = category_service.post("/api/category-book", payload=payload)
@@ -184,7 +183,7 @@ class TestCreateCategory:
 
 @allure.epic("Category Management")
 class TestUpdateCategory:
-    """TC-CAT-06 top TC-CAT-08, TC-CAT-12: PUT /api/category-book"""
+    """TC-CAT-06 to TC-CAT-08, TC-CAT-12: PUT /api/category-book"""
 
     @allure.feature("Update Category")
     @allure.story("Valid rename")
@@ -223,9 +222,9 @@ class TestUpdateCategory:
             category_service: CategoryService,
     ) -> None:
         """
-        Verify that attempting to rename a non-existent
+        Verify that attempting to rename a non-existent category
         returns 400 with "Invalid data." message.
-        Note: Server return 400 (not 404) for this case - confirmed in manual testing.
+        Note: Server returns 400 (not 404) for this case - confirmed in manual testing.
         """
         response = category_service.update_category(
             name="NonExistentCategory_AutoTest_XYZ",
@@ -237,7 +236,7 @@ class TestUpdateCategory:
 
     @allure.feature("Update Category")
     @allure.story("Validation error - missing newName field")
-    @allure.title("TC-CAT-08: Update category  without newName should return 422")
+    @allure.title("TC-CAT-08: Update category without newName should return 422")
     @pytest.mark.category
     def test_update_category_missing_new_name(
             self,
@@ -262,6 +261,33 @@ class TestUpdateCategory:
             f"Expected 'newName' in fields but got {body['fields']}"
         )
 
+    @allure.feature("Update Category")
+    @allure.story("Duplicate new name")
+    @allure.title("TC-CAT-12: Rename category to an existing category name should return 400")
+    @pytest.mark.category
+    def test_update_category_duplicate_new_name(
+            self,
+            category_service: CategoryService,
+            created_category_name: str,
+    ) -> None:
+        """
+        Verify that renaming a category to a name that already exists is rejected.
+        """
+        # Create a second category to serve as the duplicate target
+        target_name = unique_category_name("AutoTest_DuplicateTarget")
+        category_service.create_category(target_name)
+
+        try:
+            response = category_service.update_category(
+                name=created_category_name,
+                new_name=target_name,
+            )
+            assert response.status_code == 400
+            assert response.json().get("msg") == "Category already exists."
+        finally:
+            # Clean up the target category
+            category_service.delete_category(target_name)
+
 
 @allure.epic("Category Management")
 class TestDeleteCategory:
@@ -277,7 +303,7 @@ class TestDeleteCategory:
             created_category_name: str,
     ) -> None:
         """
-        Verify that an existing can be deleted successfully.
+        Verify that an existing category can be deleted successfully.
         The fixture creates the category: this test deletes it directly.
         Fixture teardown will attempt deletion again but 404 is acceptable.
         """
@@ -286,7 +312,7 @@ class TestDeleteCategory:
         assert response.status_code == 200
         assert response.json().get("msg") == "Category deleted successfully."
 
-    @allure.feature("Delete category")
+    @allure.feature("Delete Category")
     @allure.story("Delete non-existing category")
     @allure.title("TC-CAT-10: Delete non-existing category should return 404")
     @pytest.mark.category
@@ -318,19 +344,19 @@ class TestDeleteCategory:
         Observe and document server behavior when deleting a category
         that has at least one book associated (bookCount > 0).
 
-        BUG-05: Server allows deleteion without any warning or protection.
+        BUG-05: Server allows deletion without any warning or protection.
         This test documents the actual behavior rather than asserting
         an ideal behavior - serving as a regression guard.
 
-        if this test starts failing with 400 in the future, it means
-        the servers has added proper protection (which is the desired fix).
+        If this test starts failing with 400 in the future, it means
+        the server has added proper protection (which is the desired fix).
         """
         response = category_service.delete_category(created_category_with_book)
 
         # Document actual behavior: server returns 200 (force delete, no protection)
         # If server is fixed to return 400, update this assertion accordingly.
         assert response.status_code == 200, (
-            f"Observerd behavior changed - server now returns "
+            f"Observed behavior changed - server now returns "
             f"{response.status_code}: {response.text}. "
             f"Update assertion if protection has been added."
         )
@@ -338,7 +364,7 @@ class TestDeleteCategory:
         # Attach a note to the Allure report for visibility
         allure.attach(
             body=(
-                "BUG-05: Server allows deletion of category with boookCount > 0.\n "
+                "BUG-05: Server allows deletion of category with bookCount > 0.\n "
                 "Associated book may become orphaned after this operation.\n"
                 "Expected: 400 with message blocking deletion, or cascade warning."
             ),
