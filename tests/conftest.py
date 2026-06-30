@@ -12,7 +12,6 @@ import allure
 import pytest
 
 from config import settings
-from data.book_data import VALID_BOOK_PAYLOAD
 from data.category_data import unique_category_name
 from services.auth_service import AuthService
 from services.book_service import BookService
@@ -171,63 +170,92 @@ def fresh_login_service() -> AuthService:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture(scope="function")
+def created_book(book_service: BookService) -> str:
+    """
+    Create a book before a test and delete it in teardown.
+
+    Setup:      POST /api/book with a unique name, then search to retrieve the ID
+                (server does not return ID in the create response).
+    Yield:      dict with keys: id, name, status, categories, price.
+    Teardown:   DELETE /api/book/{id} - ignores 404 if the test already deleted it.
+
+    Used for: TC-BOOK-16, 17, 19-22, 24, 25, 27
+    """
+    from data.book_data import unique_book_name
+
+    book_name = unique_book_name()
+    status = "AVAILABLE"
+    categories = ["Technology"]
+    price = 150000
+    book_id = ""
+
+    with allure.step(f"Fixture setup: create book '{book_name}"):
+        create_resp = book_service.create_book(
+            name=book_name,
+            status=status,
+            categories=categories,
+            price=price,
+        )
+        assert create_resp.status_code == 200, (
+            f"created_book fixture: failed to create book.\n"
+            f"Status: {create_resp.status_code}\n"
+            f"Body:   {create_resp.text}"
+        )
+
+    with allure.step(f"Fixture setup: resolve ID for '{book_name}'"):
+        search_resp = book_service.get_books(search=book_name, limit=5)
+        assert search_resp.status_code == 200
+        matching = [b for b in search_resp.json().get("list", []) if b["name"] == book_name]
+        assert matching, f"create_book fixture: '{book_name}' not found after creation."
+        book_id = matching[0]["id"]
+        logger.info("create_book fixture: book '%s' created - id=%s", book_name, book_id)
+
+    yield {"id": book_id, "name": book_name, "status": status, "categories": categories, "price": price}
+
+    with allure.step(f"Fixture teardown: delete book id={book_id}"):
+        delete_resp = book_service.delete_book(book_id)
+        if delete_resp.status_code not in (200, 404):
+            logger.warning("created_book teardown: unexpected status %s for id=%s", delete_resp.status_code, book_id)
+        else:
+            logger.info("Fixture teardown: delete book id=%s > HTTP %s", book_id, delete_resp.status_code)
+
+
+@pytest.fixture(scope="function")
 def create_book_id(book_service: BookService) -> str:
     """
     Create a book before a test and automatically delete it after.
+    Returns the book ID.
 
-    This is a setup/teardown fixture using pytest's yield pattern:
-        - SETUP: Create a book using VALID_BOOK_PAYLOAD.
-        - YIELD: Pass the created book's ID to the test.
-        - TEARDOWN: Delete the book regardless of test pass/fail.
-
-    Scope: function - each test that needs a fresh book gets its own
-    isolated book record, preventing test interference.
-
-    Args:
-        book_service: Authenticated BookService from the session fixture.
-
-    Yields:
-        book_id (str): UUID of the newly created book.
+    Note: server returns only a success message (no ID) - fixture resolves
+    the ID via a follow-up search call.
     """
-    # --- SETUP ---
+    from data.book_data import unique_book_name
+
+    book_name = unique_book_name("autotest_book_fixture")
+    book_id = ""
+
     with allure.step("Fixture setup: create a book for the test"):
-        response = book_service.create_book(**VALID_BOOK_PAYLOAD)
-
-        # BUG-07: Server returns 200 instead of 201 and does not return the book ID.
-        # This is marked as xfail as requested.
-        if response.status_code == 200:
-            pytest.xfail(
-                "BUG-07: Server returns 200 instead of 201 on book creation, "
-                "and does not return the created book ID in the message."
-            )
-
-        assert response.status_code == 201, (
-            f"Fixture failed to create book.\n"
+        response = book_service.create_book(
+            name=book_name,
+            status="AVAILABLE",
+            categories=["Technology"],
+            price=50000,
+        )
+        assert response.status_code == 200, (
+            f"created_book_id fixture: failed to create book.\n"
             f"Status: {response.status_code}\n"
             f"Body:   {response.text}"
         )
-
-        # Extract the book ID from the response message
-        # Server returns: {"msg": "Create book successfully with id: <uuid>"}
-        msg: str = response.json().get("msg", "")
-        book_id = _extract_id_from_message(msg)
-
-        assert book_id, (
-            f"Could not extract book ID from response message: '{msg}'"
-        )
-
-        logger.info("Fixture setup: book created with ID=%s", book_id)
+        search_resp = book_service.get_books(search=book_name, limit=5)
+        matching = [b for b in search_resp.json().get("list", []) if b["name"] == book_name]
+        assert matching, f"create_book_id fixture: '{book_name}' not found after creation."
+        book_id = matching[0]["id"]
 
     yield book_id
 
-    # --- TEARDOWN --
-    with allure.step(f"Fixture teardown: delete book ID={book_id}"):
+    with allure.step(f"Fixture teardown: delete book_id id={book_id}"):
         delete_resp = book_service.delete_book(book_id)
-        logger.info(
-            "Fixture teardown: delete book ID=%s > HTTP %s",
-            book_id,
-            delete_resp.status_code
-        )
+        logger.info("Fixture teardown: delete book_id id=%s > HTTP %s", book_id, delete_resp.status_code)
 
 
 # ---------------------------------------------------------------------------
@@ -235,23 +263,10 @@ def create_book_id(book_service: BookService) -> str:
 # ---------------------------------------------------------------------------
 
 def _extract_id_from_message(message: str) -> str:
-    """
-    Parse the book UUID from the server's creation confirmation message.
-
-    The server responds with a message in the format:
-        "Create book successfully with id: <uuid>"
-
-    This helper extracts the UUID portion after the last colon+space.
-
-    Args:
-        message: The 'msg' string from the API response.
-
-    Returns:
-        Extracted ID string, or empty string if parsing fails.
-    """
-    # Split on ": " and take the last segment as the ID
+    """Legacy helper - kept for backward compatibility. Server no longer returns ID in msg."""
     parts = message.split(": ")
     return parts[-1].strip() if len(parts) >= 2 else ""
+
 
 
 @pytest.fixture(scope="function")

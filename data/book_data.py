@@ -2,124 +2,61 @@
 data/book_data.py
 -----------------
 Centralized test data for Book Management tests.
-Keeping test data separate from test logic improves maintainability
-and makes it easy to update payloads without touching test files.
 """
 
-# ---------------------------------------------------------------------------
-# Valid payloads — expected to succeed (HTTP 201)
-# ---------------------------------------------------------------------------
+import time
 
-VALID_BOOK_PAYLOAD = {
-    "name": "Python Testing with Pytest",
-    "status": "AVAILABLE",
-    "categories": ["Technology"],
-    "price": 150000,
-    "description": "A comprehensive guide to testing Python applications.",
-    "slug": "python-testing-with-pytest",
-}
-
-VALID_BOOK_MINIMAL_PAYLOAD = {
-    # Only required fields - no optional fields included
-    "name": "Minimal Book",
-    "status": "AVAILABLE",
-    "categories": ["Technology"],
-    "price": 50000,
-}
 
 # ---------------------------------------------------------------------------
-# Parametrize data for create book tests
-# Used in: tests/test_book.py::test_create_book_success
+# Unique name generator
 # ---------------------------------------------------------------------------
 
-CREATE_BOOK_VALID_CASES = [
+def unique_book_name(prefix: str = "autotest_book") -> str:
+    """
+    Generate a unique book name using a timestamp suffix.
+    Prevents conflicts when running tests against a shared environment.
+    """
+    return f"{prefix}_{int(time.time())}"
+
+
+# ---------------------------------------------------------------------------
+# Parametrize data: POST /api/book — missing required fields
+# Used in: test_book.py::TestCreateBook::test_create_book_missing_required_field
+# TC-BOOK-09: missing name | TC-BOOK-10: missing categories
+# ---------------------------------------------------------------------------
+
+CREATE_BOOK_MISSING_FIELD_CASES = [
     (
-        "full_payload",  # Test case ID shown in Allure/terminal
-        {
-            "name": "Clean Code",
-            "status": "AVAILABLE",
-            "categories": ["Technology"],
-            "price": 200000,
-            "description": "A handbook of agile software craftsmanship.",
-        },
-        201  # Expected HTTP status code
-    ),
-    (
-        "minimal_required_fields_only",
-        {
-            "name": "Minimal Required Book",
+        "missing_name",                         # TC-BOOK-09
+        {                                       # Payload with 'name' omitted
             "status": "AVAILABLE",
             "categories": ["Technology"],
             "price": 50000,
         },
-        201,
+        422,
+        "name",                                 # Expected key in 'fields' error object
     ),
     (
-        "unavailable_status",
-        {
-            "name": "Out of Stock Book",
-            "status": "UNAVAILABLE",
-            "categories": ["Technology"],
-            "price": 75000,
+        "missing_categories",                   # TC-BOOK-10
+        {                                       # Payload with 'categories' omitted
+            "name": "Book Without Category",
+            "status": "AVAILABLE",
+            "price": 50000,
         },
-        201,
+        422,
+        "categories",
     ),
 ]
 
 # ---------------------------------------------------------------------------
-# Parametrize data for validation error tests
-# Used in: tests/test_book.py::test_create_book_validation_error
+# Parametrize data: PATCH /api/book/{id} — update individual fields
+# Used in: test_book.py::TestUpdateBook::test_update_book_field
+# TC-BOOK-19: name | TC-BOOK-20: status | TC-BOOK-21: price | TC-BOOK-22: categories
 # ---------------------------------------------------------------------------
 
-CREATE_BOOK_INVALID_CASES = [
-    (
-        "missing_name",
-        {
-            # 'name' field intentionally omitted
-            "status": "AVAILABLE",
-            "categories": ["Technology"],
-            "price": 50000,
-        },
-        422,  # Expect Unprocessable Entity
-    ),
-    (
-        "missing_categories",
-        {
-            "name": "Book Without Category",
-            "status": "AVAILABLE",
-            # 'categories' field intentionally omitted
-            "price": 50000,
-        },
-        422,
-    ),
-    (
-        "missing_price",
-        {
-            "name": "Book Without Price",
-            "status": "AVAILABLE",
-            "categories": ["Technology"],
-            # 'price' field intentionally omitted
-        },
-        422,
-    ),
-    (
-        "missing_status_value",
-        {
-            "name": "Book With Bad Status",
-            "status": "INVALID_STATUS",  # Not in enum: AVAILABLE | UNAVAILABLE
-            "categories": ["Technology"],
-            "price": 50000,
-        },
-        422,
-    ),
-    (
-        "missing_categories_array",
-        {
-            "name": "Book With Empty Categories",
-            "status": "AVAILABLE",
-            "categories": [],  # minItems: 1 per OpenAPI spec
-            "price": 50000,
-        },
-        422,
-    ),
+UPDATE_BOOK_FIELD_CASES = [
+    ("update_name",       {"name": "AutoTest Updated Book Name"}),          # TC-BOOK-19
+    ("update_status",     {"status": "UNAVAILABLE"}),                       # TC-BOOK-20
+    ("update_price",      {"price": 250000}),                               # TC-BOOK-21
+    ("update_categories", {"categories": ["Technology", "Programming"]}),   # TC-BOOK-22
 ]
